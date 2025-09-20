@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Only Us ❤️</title>
+  <script src="https://cdn.jsdelivr.net/npm/agora-rtc-sdk-ng@4.20.2"></script>
+</head>
+<body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
+  <h2>Only Us ❤️ Voice Call</h2>
+  <button id="joinBtn">Join Call</button>
+  <button id="leaveBtn" disabled>Leave Call</button>
+
+  <script>
+    const APP_ID = "ae2ce2e790744908bc1312432be83ae4";   // 🔑 Replace with your Agora App ID
+    const CHANNEL = "myLoveChannel2025"; // Secret channel name
+    const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+
+    let localTrack;
+
+    document.getElementById("joinBtn").onclick = async () => {
+      await client.join(APP_ID, CHANNEL, null, null);
+
+      // Create and publish microphone audio
+      localTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      await client.publish([localTrack]);
+
+      alert("💖 Connected! Waiting for your partner...");
+      document.getElementById("joinBtn").disabled = true;
+      document.getElementById("leaveBtn").disabled = false;
+    };
+
+    client.on("user-published", async (user, mediaType) => {
+      await client.subscribe(user, mediaType);
+      if (mediaType === "audio") {
+        user.audioTrack.play(); // Play her voice!
+      }
+    });
+
+    document.getElementById("leaveBtn").onclick = async () => {
+      localTrack.close();
+      await client.leave();
+      alert("👋 Call ended");
+      document.getElementById("joinBtn").disabled = false;
+      document.getElementById("leaveBtn").disabled = true;
+    };
+  </script>
+</body>
+</html>
