@@ -4,167 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Only Us ❤️</title>
-<script src="https://cdn.jsdelivr.net/npm/agora-rtc-sdk-ng@4.20.2"></script>
-<style>
-body {
-  margin: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #ff9a9e, #fad0c4);
-  overflow: hidden;
-  color: #fff;
-  text-align: center;
-}
-h2 { font-size:2.5rem; margin-bottom:1rem; text-shadow:2px 2px 6px rgba(0,0,0,0.2);}
-.btn { padding:12px 24px; margin:10px; font-size:1.1rem; font-weight:bold; border:none; border-radius:30px; cursor:pointer; transition: all 0.3s ease; }
-#joinBtn { background: #ff4b5c; color:white; box-shadow:0 4px 15px rgba(255,75,92,0.4);}
-#leaveBtn { background: #444; color:white; box-shadow:0 4px 15px rgba(0,0,0,0.3);}
-#speakerBtn { background:#ffcc70; color:#333; box-shadow:0 4px 15px rgba(255,204,112,0.4);}
-.btn:hover:not([disabled]){transform:scale(1.05);}
-.btn:disabled{opacity:0.5; cursor:not-allowed; transform:none !important;}
-#status{margin-top:20px; font-size:1.2rem; font-style:italic;}
-#speakerBtn.active{box-shadow:0 0 20px 5px #ffcc70,0 0 40px 10px #ffcc70; animation:glowPulse 1.5s infinite alternate;}
-@keyframes glowPulse {0%{box-shadow:0 0 10px 2px #ffcc70;}50%{box-shadow:0 0 20px 5px #ffcc70;}100%{box-shadow:0 0 30px 8px #ffcc70;}}
-.message{
-  position:absolute;
-  bottom:-50px;
-  left:50%;
-  transform:translateX(-50%);
-  padding:8px 14px;
-  border-radius:12px;
-  font-weight:bold;
-  background:rgba(255,255,255,0.2);
-  backdrop-filter:blur(6px);
-  color:transparent;
-  text-shadow:0 0 8px rgba(255,255,255,0.8);
-  cursor:pointer;
-  transition:all 0.4s ease;
-  white-space:normal;
-  max-width:90vw;
-  overflow-wrap:break-word;
-  word-break:break-word;
-  text-align:center;
-}
-.message.revealed{
-  color:#fff;
-  text-shadow:none;
-  backdrop-filter:blur(0px);
-  background:rgba(0,0,0,0.3);
-  transform:scale(1.2) rotate(0deg)!important;
-  box-shadow:0 0 20px rgba(255,255,255,0.6);
-}
-@keyframes floatMsg{
-  0%{transform:translateY(0) translateX(-50%) rotate(0deg);opacity:1;}
-  50%{transform:translateY(-50vh) translateX(-50%) rotate(10deg);opacity:0.8;}
-  100%{transform:translateY(-110vh) translateX(-50%) rotate(-10deg);opacity:0;}
-}
-@media (max-width:768px){h2{font-size:1.8rem;} .btn{padding:10px 18px; font-size:1rem;} .message{font-size:14px;}}
-@media (max-width:480px){h2{font-size:1.4rem;} .btn{padding:8px 14px; font-size:0.9rem;} #status{font-size:1rem;}}
-</style>
-</head>
-<body>
-<h2>Only Us ❤️ Voice Call</h2>
-<div>
-  <button id="joinBtn" class="btn">Call na Prakritii</button>
-  <button id="leaveBtn" class="btn" disabled>Please Don't 🥺</button>
-</div>
-<div id="status">Not connected</div>
-
-<script>
-const APP_ID="ae2ce2e790744908bc1312432be83ae4";
-const CHANNEL="myLoveChannel2025";
-const client=AgoraRTC.createClient({mode:"rtc", codec:"vp8"});
-
-let localTrack, remoteAudio, speakerOn=false;
-let audioContext, gainNode, remoteSource;
-
-const messages=[
-  "🌍 My world Nonu!!","💕 Mjhe song kab sunaoge","🌸 Aap itne cute kaise ho","✨ Ladte bhi ho mere se itna zyda",
-  "🥰 Aapki hasi meri fav hai","💫 Aapki voice to soo soothing","🌹 Thoda smile kr dijiye","😞 How will I live without you",
-  "🫀 Mjhe hmesha aapki need rhegi","🥺 Yad rkhoge na mjhe Nonu","💪 Meri biceps dekh kr dar lga","☀️ Cutie",
-  "🔥 Aap jaha hote ho wha to hmesha summer hi hota hoga","😇 Kbhi socha bhi nahi tha ki ye sab creativity bhi hai mere andr",
-  "🌻 You brighten my day","🦋 My little butterfly"
-];
-
-function createMessage(){
-  const msg=document.createElement("div");
-  msg.className="message";
-  msg.textContent=messages[Math.floor(Math.random()*messages.length)];
-  const colors=["#ff4b5c","#fff","#ff9a9e","#fad0c4"];
-  msg.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)]+"33";
-
-  msg.addEventListener("click",()=>msg.classList.add("revealed"));
-  document.body.appendChild(msg);
-
-  // Measure width → set animation duration based on it
-  requestAnimationFrame(()=>{
-    const msgWidth = msg.offsetWidth;
-    const baseDuration = 10; // seconds for small text
-    const extra = Math.min(msgWidth / 50, 10); // add duration if wide
-    const duration = baseDuration + extra;
-    msg.style.animation = `floatMsg ${duration}s linear forwards`;
-    setTimeout(()=>msg.remove(), duration*1000);
-  });
-}
-setInterval(createMessage,2500);
-
-// JOIN
-document.getElementById("joinBtn").onclick=async()=>{
-  document.getElementById("joinBtn").disabled=true;
-  await client.join(APP_ID,CHANNEL,null,null);
-  localTrack=await AgoraRTC.createMicrophoneAudioTrack({encoderConfig:"high_quality",AEC:true,AGC:true,ANS:true});
-  await client.publish([localTrack]);
-  document.getElementById("status").textContent="💖 Connected! Waiting for your partner...";
-  document.getElementById("leaveBtn").disabled=false;
-};
-
-// REMOTE AUDIO + Voice Boost
-client.on("user-published", async(user, mediaType)=>{
-  await client.subscribe(user, mediaType);
-  if(mediaType==="audio"){
-    if(remoteAudio) remoteAudio.remove();
-    remoteAudio=document.createElement("audio");
-    remoteAudio.autoplay=true;
-    remoteAudio.volume=1.0;
-    await user.audioTrack.play(remoteAudio);
-
-    if(!audioContext){
-      audioContext=new AudioContext();
-      gainNode=audioContext.createGain();
-      remoteSource=audioContext.createMediaElementSource(remoteAudio);
-      remoteSource.connect(gainNode).connect(audioContext.destination);
-      gainNode.gain.value=1.4;
-    }
-
-    document.getElementById("status").textContent="🎶 You’re talking now!";
-    if(navigator.vibrate) navigator.vibrate(300);
-  }
-});
-
-// LEAVE
-document.getElementById("leaveBtn").onclick=async()=>{
-  document.getElementById("leaveBtn").disabled=true;
-  if(localTrack) localTrack.close();
-  await client.leave();
-  document.getElementById("status").textContent="👋 Call ended";
-  document.getElementById("joinBtn").disabled=false;
-  if(audioContext) audioContext.close(); audioContext=null;
-};
-</script>
-</body>
-</html>
- -->
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Only Us ❤️</title>
 
 <!-- Favicon for browser tab -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
@@ -321,4 +160,233 @@ document.getElementById("leaveBtn").onclick=async()=>{
 };
 </script>
 </body>
+</html> 
+-->
+<!DOCTYPE html>
+<html lang="en"> 
+<head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <title>Only Us ❤️</title>
+
+  <!-- Favicon for browser tab -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+  <!-- Manifest for "Add to Home Screen" -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Agora SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/agora-rtc-sdk-ng@4.20.2"></script>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      overflow: hidden;
+      color: #fff;
+      text-align: center;
+    }
+    h2 {
+      font-size:2.5rem; 
+      margin-bottom:1rem; 
+      text-shadow:2px 2px 6px rgba(0,0,0,0.2);
+    }
+    .btn {
+      padding:12px 24px;
+      margin:10px;
+      font-size:1.1rem;
+      font-weight:bold;
+      border:none;
+      border-radius:30px;
+      cursor:pointer;
+      transition: all 0.3s ease;
+    }
+    #joinBtn {
+      background: #ff4b5c;
+      color:white;
+      box-shadow:0 4px 15px rgba(255,75,92,0.4);
+    }
+    #leaveBtn {
+      background: #444;
+      color:white;
+      box-shadow:0 4px 15px rgba(0,0,0,0.3);
+    }
+    .btn:hover:not([disabled]){
+      transform:scale(1.05);
+    }
+    .btn:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+      transform:none !important;
+    }
+    #status{
+      margin-top:20px; 
+      font-size:1.2rem; 
+      font-style:italic;
+    }
+
+    /* Floating messages */
+    .message {
+      position:absolute;
+      bottom:-50px;
+      left:50%;
+      transform:translateX(-50%);
+      cursor:pointer;
+      white-space:normal;
+      max-width:90vw;
+      overflow-wrap:break-word;
+      word-break:break-word;
+      text-align:center;
+      animation: floatMsg 10s linear forwards;
+    }
+    .message-inner {
+      padding:8px 14px;
+      border-radius:12px;
+      font-weight:bold;
+      background:rgba(255,255,255,0.2);
+      backdrop-filter:blur(6px);
+      color:transparent;
+      text-shadow:0 0 8px rgba(255,255,255,0.8);
+      transition: all 0.4s ease;
+      display:inline-block;
+    }
+    .message-inner.revealed {
+      color:#fff;
+      text-shadow:none;
+      backdrop-filter:blur(0px);
+      background:rgba(0,0,0,0.3);
+      transform:scale(1.2);
+      box-shadow:0 0 20px rgba(255,255,255,0.6);
+    }
+
+    @keyframes floatMsg{
+      0%{transform:translateY(0) translateX(-50%) rotate(0deg);opacity:1;}
+      50%{transform:translateY(-50vh) translateX(-50%) rotate(10deg);opacity:0.8;}
+      100%{transform:translateY(-110vh) translateX(-50%) rotate(-10deg);opacity:0;}
+    }
+
+    @media (max-width:768px){
+      h2{font-size:1.8rem;}
+      .btn{padding:10px 18px; font-size:1rem;}
+      .message-inner{font-size:14px;}
+    }
+    @media (max-width:480px){
+      h2{font-size:1.4rem;}
+      .btn{padding:8px 14px; font-size:0.9rem;}
+      #status{font-size:1rem;}
+    }
+  </style>
+</head> 
+
+<body> 
+  <h2>Only Us ❤️ Voice Call</h2> 
+  <div> 
+    <button id="joinBtn" class="btn">Call na Prakritii</button> 
+    <button id="leaveBtn" class="btn" disabled>Please Don't 🥺</button> 
+  </div> 
+  <div id="status">Not connected</div>
+
+  <script>
+    const APP_ID="appID"; 
+    const CHANNEL="myLoveChannel2025"; 
+    const client=AgoraRTC.createClient({mode:"rtc", codec:"vp8"});
+
+    let localTrack, remoteAudio, audioContext, gainNode, remoteSource;
+
+    const messages=[
+      "🌍 My world Nonu!!","💕 Mjhe song kab sunaoge","🌸 Aap itne cute kaise ho",
+      "✨ Ladte bhi ho mere se itna zyda", "🥰 Aapki hasi meri fav hai",
+      "💫 Aapki voice to soo soothing","🌹 Thoda smile kr dijiye",
+      "😞 How will I live without you", "🫀 Mjhe hmesha aapki need rhegi",
+      "🥺 Yad rkhoge na mjhe Nonu","💪 Meri biceps dekh kr dar lga","☀️ Cutie",
+      "🔥 Aap jaha hote ho wha to hmesha summer hi hota hoga",
+      "😇 Kbhi socha bhi nahi tha ki ye sab creativity bhi hai mere andr",
+      "🌻 You brighten my day","🦋 My little butterfly"
+    ];
+
+    function createMessage(){
+      const msg=document.createElement("div");
+      msg.className="message";
+
+      const inner=document.createElement("span");
+      inner.className="message-inner";
+      inner.textContent=messages[Math.floor(Math.random()*messages.length)];
+
+      const colors=["#ff4b5c","#fff","#ff9a9e","#fad0c4"];
+      inner.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)]+"33";
+
+      inner.addEventListener("click",()=>{
+        inner.classList.add("revealed");
+      });
+
+      msg.appendChild(inner);
+      document.body.appendChild(msg);
+
+      // Set custom float duration
+      requestAnimationFrame(()=>{
+        const msgWidth = msg.offsetWidth;
+        const baseDuration = 10;
+        const extra = Math.min(msgWidth / 50, 10);
+        const duration = baseDuration + extra;
+        msg.style.animation = `floatMsg ${duration}s linear forwards`;
+
+        // Remove the message exactly when animation ends
+        msg.addEventListener("animationend", () => {
+          msg.remove();
+        });
+      }); 
+    }
+    setInterval(createMessage,2500);
+
+    // Join Call
+    document.getElementById("joinBtn").onclick=async()=>{
+      document.getElementById("joinBtn").disabled=true;
+      await client.join(APP_ID,CHANNEL,null,null);
+      localTrack=await AgoraRTC.createMicrophoneAudioTrack({
+        encoderConfig:"high_quality", // 48kHz mono ~40kbps
+        AEC:true, AGC:true, ANS:true
+      });
+      await client.publish([localTrack]);
+      document.getElementById("status").textContent="💖 Connected! Waiting for your partner...";
+      document.getElementById("leaveBtn").disabled=false;
+    };
+
+    // Subscribe when partner joins
+    client.on("user-published", async(user, mediaType)=>{
+      await client.subscribe(user, mediaType);
+      if(mediaType==="audio"){
+        if(remoteAudio) remoteAudio.remove();
+        remoteAudio=document.createElement("audio");
+        remoteAudio.autoplay=true;
+        remoteAudio.volume=1.0;
+        await user.audioTrack.play(remoteAudio);
+
+        if(!audioContext){
+          audioContext=new AudioContext();
+          gainNode=audioContext.createGain();
+          remoteSource=audioContext.createMediaElementSource(remoteAudio);
+          remoteSource.connect(gainNode).connect(audioContext.destination);
+          gainNode.gain.value=1.4;  // little volume boost
+        }
+        document.getElementById("status").textContent="🎶 You’re talking now!";
+      }
+    });
+
+    // Leave Call
+    document.getElementById("leaveBtn").onclick=async()=>{
+      document.getElementById("leaveBtn").disabled=true;
+      if(localTrack) localTrack.close();
+      await client.leave();
+      document.getElementById("status").textContent="👋 Call ended";
+      document.getElementById("joinBtn").disabled=false;
+      if(audioContext) audioContext.close();
+      audioContext=null;
+    };
+  </script>
+</body> 
 </html>
