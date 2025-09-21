@@ -575,7 +575,7 @@ setInterval(createMessage,2500);
 document.getElementById("joinBtn").onclick=async()=>{
   document.getElementById("joinBtn").disabled=true;
   await client.join(APP_ID,CHANNEL,null,null);
-  localTrack=await AgoraRTC.createMicrophoneAudioTrack({encoderConfig:"high_quality_stereo",AEC:true,AGC:true,ANS:true});
+  localTrack=await AgoraRTC.createMicrophoneAudioTrack({encoderConfig:"high_quality",AEC:true,AGC:true,ANS:true});
   await client.publish([localTrack]);
   document.getElementById("status").textContent="💖 Connected! Waiting for your partner...";
   document.getElementById("leaveBtn").disabled=false;
