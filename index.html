@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Only Us ❤️</title>
-  <!-- Standard Favicon -->
-  <link rel="icon" href="icon.png" type="image/png">
+<!-- Standard Favicon -->
+<link rel="icon" href="icon.png" type="image/png">
 
 <!-- Favicon for browser tab -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
@@ -84,13 +84,13 @@ h2 { font-size:2.5rem; margin-bottom:1rem; text-shadow:2px 2px 6px rgba(0,0,0,0.
 <div id="status">Not connected</div>
 
 <script>
-const APP_ID="ae2ce2e790744908bc1312432be83ae4";
-const CHANNEL="myLoveChannel2025";
-const client=AgoraRTC.createClient({mode:"rtc", codec:"vp8"});
+const APP_ID = "ae2ce2e790744908bc1312432be83ae4"; // Make sure certificate is disabled if using null token
+const CHANNEL = "myLoveChannel2025";
+const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-let localTrack, remoteAudio, speakerOn=false;
-let audioContext, gainNode, remoteSource;
+let localTrack;
 
+// Floating love messages
 const messages=[
   "🌍 My world Nonu!!","💕 Mjhe song kab sunaoge","🌸 Aap itne cute kaise ho","✨ Ladte bhi ho mere se itna zyda",
   "🥰 Aapki hasi meri fav hai","💫 Aapki voice to soo soothing","🌹 Thoda smile kr dijiye","😞 How will I live without you",
@@ -109,11 +109,10 @@ function createMessage(){
   msg.addEventListener("click",()=>msg.classList.add("revealed"));
   document.body.appendChild(msg);
 
-  // Measure width → set animation duration based on it
   requestAnimationFrame(()=>{
     const msgWidth = msg.offsetWidth;
-    const baseDuration = 10; // seconds for small text
-    const extra = Math.min(msgWidth / 50, 10); // add duration if wide
+    const baseDuration = 10; 
+    const extra = Math.min(msgWidth / 50, 10);
     const duration = baseDuration + extra;
     msg.style.animation = `floatMsg ${duration}s linear forwards`;
     setTimeout(()=>msg.remove(), duration*1000);
@@ -121,47 +120,40 @@ function createMessage(){
 }
 setInterval(createMessage,2500);
 
-// JOIN
-document.getElementById("joinBtn").onclick=async()=>{
-  document.getElementById("joinBtn").disabled=true;
-  await client.join(APP_ID,CHANNEL,null,null);
-  localTrack=await AgoraRTC.createMicrophoneAudioTrack({encoderConfig:"high_quality",AEC:true,AGC:true,ANS:true});
+// JOIN CALL
+document.getElementById("joinBtn").onclick = async () => {
+  document.getElementById("joinBtn").disabled = true;
+  await client.join(APP_ID, CHANNEL, null, null); // token = null only works if certificate disabled
+  localTrack = await AgoraRTC.createMicrophoneAudioTrack({
+    encoderConfig: "high_quality",
+    AEC: true,
+    AGC: true,
+    ANS: true
+  });
   await client.publish([localTrack]);
-  document.getElementById("status").textContent="💖 Connected! Waiting for your partner...";
-  document.getElementById("leaveBtn").disabled=false;
+  document.getElementById("status").textContent = "💖 Connected! Waiting for your partner...";
+  document.getElementById("leaveBtn").disabled = false;
 };
 
-// REMOTE AUDIO + Voice Boost
-client.on("user-published", async(user, mediaType)=>{
+// REMOTE AUDIO
+client.on("user-published", async (user, mediaType) => {
   await client.subscribe(user, mediaType);
-  if(mediaType==="audio"){
-    if(remoteAudio) remoteAudio.remove();
-    remoteAudio=document.createElement("audio");
-    remoteAudio.autoplay=true;
-    remoteAudio.volume=1.0;
-    await user.audioTrack.play(remoteAudio);
+  if (mediaType === "audio") {
+    user.audioTrack.play();  // directly play remote audio
+    user.audioTrack.setVolume(100); // optional: control volume (0–100)
 
-    if(!audioContext){
-      audioContext=new AudioContext();
-      gainNode=audioContext.createGain();
-      remoteSource=audioContext.createMediaElementSource(remoteAudio);
-      remoteSource.connect(gainNode).connect(audioContext.destination);
-      gainNode.gain.value=1.4;
-    }
-
-    document.getElementById("status").textContent="🎶 You’re talking now!";
-    if(navigator.vibrate) navigator.vibrate(300);
+    document.getElementById("status").textContent = "🎶 You’re talking now!";
+    if (navigator.vibrate) navigator.vibrate(300);
   }
 });
 
-// LEAVE
-document.getElementById("leaveBtn").onclick=async()=>{
-  document.getElementById("leaveBtn").disabled=true;
-  if(localTrack) localTrack.close();
+// LEAVE CALL
+document.getElementById("leaveBtn").onclick = async () => {
+  document.getElementById("leaveBtn").disabled = true;
+  if (localTrack) localTrack.close();
   await client.leave();
-  document.getElementById("status").textContent="👋 Call ended";
-  document.getElementById("joinBtn").disabled=false;
-  if(audioContext) audioContext.close(); audioContext=null;
+  document.getElementById("status").textContent = "👋 Call ended";
+  document.getElementById("joinBtn").disabled = false;
 };
 </script>
 </body>
