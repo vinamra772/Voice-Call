@@ -4,15 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Only Us ❤️</title>
-<!-- Standard Favicon -->
 <link rel="icon" href="icon.png" type="image/png">
-
-<!-- Favicon for browser tab -->
-<link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-
-<!-- Manifest for "Add to Home Screen" -->
 <link rel="manifest" href="manifest.json">
-
 <script src="https://cdn.jsdelivr.net/npm/agora-rtc-sdk-ng@4.20.2"></script>
 <style>
 body {
@@ -28,16 +21,13 @@ body {
   color: #fff;
   text-align: center;
 }
-h2 { font-size:2.5rem; margin-bottom:1rem; text-shadow:2px 2px 6px rgba(0,0,0,0.2);}
+h2 { font-size:2.2rem; margin-bottom:1rem; text-shadow:2px 2px 6px rgba(0,0,0,0.2);}
 .btn { padding:12px 24px; margin:10px; font-size:1.1rem; font-weight:bold; border:none; border-radius:30px; cursor:pointer; transition: all 0.3s ease; }
 #joinBtn { background: #ff4b5c; color:white; box-shadow:0 4px 15px rgba(255,75,92,0.4);}
 #leaveBtn { background: #444; color:white; box-shadow:0 4px 15px rgba(0,0,0,0.3);}
-#speakerBtn { background:#ffcc70; color:#333; box-shadow:0 4px 15px rgba(255,204,112,0.4);}
 .btn:hover:not([disabled]){transform:scale(1.05);}
-.btn:disabled{opacity:0.5; cursor:not-allowed; transform:none !important;}
+.btn:disabled{opacity:0.5; cursor:not-allowed;}
 #status{margin-top:20px; font-size:1.2rem; font-style:italic;}
-#speakerBtn.active{box-shadow:0 0 20px 5px #ffcc70,0 0 40px 10px #ffcc70; animation:glowPulse 1.5s infinite alternate;}
-@keyframes glowPulse {0%{box-shadow:0 0 10px 2px #ffcc70;}50%{box-shadow:0 0 20px 5px #ffcc70;}100%{box-shadow:0 0 30px 8px #ffcc70;}}
 .message{
   position:absolute;
   bottom:-50px;
@@ -63,16 +53,13 @@ h2 { font-size:2.5rem; margin-bottom:1rem; text-shadow:2px 2px 6px rgba(0,0,0,0.
   text-shadow:none;
   backdrop-filter:blur(0px);
   background:rgba(0,0,0,0.3);
-  transform:scale(1.2) rotate(0deg)!important;
+  transform:scale(1.2)!important;
   box-shadow:0 0 20px rgba(255,255,255,0.6);
 }
 @keyframes floatMsg{
-  0%{transform:translateY(0) translateX(-50%) rotate(0deg);opacity:1;}
-  50%{transform:translateY(-50vh) translateX(-50%) rotate(10deg);opacity:0.8;}
-  100%{transform:translateY(-110vh) translateX(-50%) rotate(-10deg);opacity:0;}
+  0%{transform:translateY(0) translateX(-50%);opacity:1;}
+  100%{transform:translateY(-110vh) translateX(-50%);opacity:0;}
 }
-@media (max-width:768px){h2{font-size:1.8rem;} .btn{padding:10px 18px; font-size:1rem;} .message{font-size:14px;}}
-@media (max-width:480px){h2{font-size:1.4rem;} .btn{padding:8px 14px; font-size:0.9rem;} #status{font-size:1rem;}}
 </style>
 </head>
 <body>
@@ -84,13 +71,13 @@ h2 { font-size:2.5rem; margin-bottom:1rem; text-shadow:2px 2px 6px rgba(0,0,0,0.
 <div id="status">Not connected</div>
 
 <script>
-const APP_ID = "ae2ce2e790744908bc1312432be83ae4"; // Make sure certificate is disabled if using null token
+const APP_ID = "ae2ce2e790744908bc1312432be83ae4"; // make sure certificate is OFF if using null token
 const CHANNEL = "myLoveChannel2025";
 const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
 let localTrack;
 
-// Floating love messages
+// floating messages
 const messages=[
   "🌍 My world Nonu!!","💕 Mjhe song kab sunaoge","🌸 Aap itne cute kaise ho","✨ Ladte bhi ho mere se itna zyda",
   "🥰 Aapki hasi meri fav hai","💫 Aapki voice to soo soothing","🌹 Thoda smile kr dijiye","😞 How will I live without you",
@@ -103,57 +90,75 @@ function createMessage(){
   const msg=document.createElement("div");
   msg.className="message";
   msg.textContent=messages[Math.floor(Math.random()*messages.length)];
-  const colors=["#ff4b5c","#fff","#ff9a9e","#fad0c4"];
-  msg.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)]+"33";
-
-  msg.addEventListener("click",()=>msg.classList.add("revealed"));
   document.body.appendChild(msg);
 
   requestAnimationFrame(()=>{
-    const msgWidth = msg.offsetWidth;
-    const baseDuration = 10; 
-    const extra = Math.min(msgWidth / 50, 10);
-    const duration = baseDuration + extra;
+    const duration = 10 + Math.random()*5;
     msg.style.animation = `floatMsg ${duration}s linear forwards`;
     setTimeout(()=>msg.remove(), duration*1000);
   });
 }
-setInterval(createMessage,2500);
+setInterval(createMessage, 2500);
 
 // JOIN CALL
 document.getElementById("joinBtn").onclick = async () => {
-  document.getElementById("joinBtn").disabled = true;
-  await client.join(APP_ID, CHANNEL, null, null); // token = null only works if certificate disabled
-  localTrack = await AgoraRTC.createMicrophoneAudioTrack({
-    encoderConfig: "high_quality",
-    AEC: true,
-    AGC: true,
-    ANS: true
-  });
-  await client.publish([localTrack]);
-  document.getElementById("status").textContent = "💖 Connected! Waiting for your partner...";
-  document.getElementById("leaveBtn").disabled = false;
+  try {
+    document.getElementById("joinBtn").disabled = true;
+    await client.join(APP_ID, CHANNEL, null, null);
+    localTrack = await AgoraRTC.createMicrophoneAudioTrack({
+      encoderConfig: "high_quality",
+      AEC: true,
+      AGC: true,
+      ANS: true
+    });
+    await client.publish([localTrack]);
+    document.getElementById("status").textContent = "💖 Connected! Waiting for your partner...";
+    document.getElementById("leaveBtn").disabled = false;
+
+    // fix autoplay issues
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
+  } catch (err) {
+    console.error("Join error:", err);
+    document.getElementById("status").textContent = "❌ Failed to join: " + err.message;
+    document.getElementById("joinBtn").disabled = false;
+  }
 };
 
 // REMOTE AUDIO
 client.on("user-published", async (user, mediaType) => {
-  await client.subscribe(user, mediaType);
-  if (mediaType === "audio") {
-    user.audioTrack.play();  // directly play remote audio
-    user.audioTrack.setVolume(100); // optional: control volume (0–100)
-
-    document.getElementById("status").textContent = "🎶 You’re talking now!";
-    if (navigator.vibrate) navigator.vibrate(300);
+  try {
+    await client.subscribe(user, mediaType);
+    if (mediaType === "audio") {
+      user.audioTrack.play();
+      user.audioTrack.setVolume(100);
+      document.getElementById("status").textContent = "🎶 You’re talking now!";
+    }
+  } catch (err) {
+    console.error("Subscribe error:", err);
   }
+});
+
+client.on("user-unpublished", user => {
+  document.getElementById("status").textContent = "Partner left 😢";
 });
 
 // LEAVE CALL
 document.getElementById("leaveBtn").onclick = async () => {
-  document.getElementById("leaveBtn").disabled = true;
-  if (localTrack) localTrack.close();
-  await client.leave();
-  document.getElementById("status").textContent = "👋 Call ended";
-  document.getElementById("joinBtn").disabled = false;
+  try {
+    document.getElementById("leaveBtn").disabled = true;
+    if (localTrack) {
+      localTrack.stop();
+      localTrack.close();
+    }
+    await client.leave();
+    document.getElementById("status").textContent = "👋 Call ended";
+    document.getElementById("joinBtn").disabled = false;
+  } catch (err) {
+    console.error("Leave error:", err);
+  }
 };
 </script>
 </body>
